@@ -20,13 +20,21 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  enrollments  Enrollment[]
-  posts        Post[]
-  comments     Comment[]
-  payments     Payment[]
-  reviews      Review[]
-  ownedCoupons Coupon[]   @relation("OwnedCoupons")
-  usedCoupons  Coupon[]   @relation("UsedCoupons")
+  // 리퍼럴 관련 필드
+  referralCode  String?   @unique
+  referredById  String?
+  referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
+  referrals     User[]    @relation("Referrals")
+
+  enrollments      Enrollment[]
+  posts            Post[]
+  comments         Comment[]
+  payments         Payment[]
+  reviews          Review[]
+  ownedCoupons     Coupon[]         @relation("OwnedCoupons")
+  usedCoupons      Coupon[]         @relation("UsedCoupons")
+  givenRewards     ReferralReward[] @relation("GivenRewards")
+  receivedRewards  ReferralReward[] @relation("ReceivedRewards")
 }
 
 model VerificationToken {
@@ -247,4 +255,31 @@ model Coupon {
   @@index([ownerId])
   @@index([code])
   @@index([status])
+}
+
+model ReferralReward {
+  id          String             @id @default(cuid())
+  referrerId  String
+  referrer    User               @relation("GivenRewards", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId   String
+  referee     User               @relation("ReceivedRewards", fields: [refereeId], references: [id], onDelete: Cascade)
+  type        ReferralRewardType
+  amount      Int
+  status      RewardStatus       @default(PENDING)
+  createdAt   DateTime           @default(now())
+  paidAt      DateTime?
+
+  @@index([referrerId])
+  @@index([refereeId])
+}
+
+enum ReferralRewardType {
+  SIGNUP       // 회원가입 보상
+  FIRST_PURCHASE // 첫 결제 보상
+}
+
+enum RewardStatus {
+  PENDING   // 대기중
+  CONFIRMED // 확정
+  PAID      // 지급완료
 }

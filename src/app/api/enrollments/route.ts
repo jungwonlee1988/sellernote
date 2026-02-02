@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { processFirstPurchaseReferral } from '@/lib/referral'
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,6 +63,9 @@ export async function POST(request: NextRequest) {
         course: true,
       },
     })
+
+    // 첫 결제 리퍼럴 보상 처리
+    await processFirstPurchaseReferral(session.user.id)
 
     return NextResponse.json(
       {

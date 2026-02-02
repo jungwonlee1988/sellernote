@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Mail, Lock, User, Phone, Loader2, CheckCircle } from 'lucide-react'
+import { Mail, Lock, User, Phone, Loader2, CheckCircle, Users, Check } from 'lucide-react'
 import Image from 'next/image'
 
 const registerSchema = z.object({
@@ -15,6 +15,7 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
   name: z.string().min(2, '이름은 2자 이상이어야 합니다.'),
   phone: z.string().optional(),
+  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: '비밀번호가 일치하지 않습니다.',
   path: ['confirmPassword'],
@@ -22,20 +23,72 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [registered, setRegistered] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
+  const [referralValid, setReferralValid] = useState<boolean | null>(null)
+  const [referrerName, setReferrerName] = useState<string | null>(null)
+  const [isValidatingReferral, setIsValidatingReferral] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   })
+
+  const referralCode = watch('referralCode')
+
+  // URL에서 추천 코드 가져오기
+  useEffect(() => {
+    const refCode = searchParams.get('ref')
+    if (refCode) {
+      setValue('referralCode', refCode.toUpperCase())
+      validateReferralCode(refCode)
+    }
+  }, [searchParams, setValue])
+
+  // 추천 코드 검증
+  const validateReferralCode = async (code: string) => {
+    if (!code || code.length !== 6) {
+      setReferralValid(null)
+      setReferrerName(null)
+      return
+    }
+
+    setIsValidatingReferral(true)
+    try {
+      const response = await fetch('/api/referral/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const result = await response.json()
+      setReferralValid(result.valid)
+      setReferrerName(result.referrer?.name || null)
+    } catch {
+      setReferralValid(false)
+    } finally {
+      setIsValidatingReferral(false)
+    }
+  }
+
+  // 추천 코드 입력 시 자동 검증
+  useEffect(() => {
+    if (referralCode && referralCode.length === 6) {
+      validateReferralCode(referralCode)
+    } else {
+      setReferralValid(null)
+      setReferrerName(null)
+    }
+  }, [referralCode])
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true)
@@ -50,6 +103,7 @@ export default function RegisterPage() {
           password: data.password,
           name: data.name,
           phone: data.phone,
+          referralCode: referralValid ? data.referralCode : undefined,
         }),
       })
 
@@ -238,6 +292,50 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
+
+            <div>
+              <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 mb-1">
+                추천 코드 <span className="text-gray-400">(선택)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Users className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="referralCode"
+                  type="text"
+                  {...register('referralCode')}
+                  onChange={(e) => setValue('referralCode', e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50] focus:border-transparent uppercase ${
+                    referralValid === true
+                      ? 'border-green-500 bg-green-50'
+                      : referralValid === false
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300'
+                  }`}
+                  placeholder="6자리 추천 코드"
+                />
+                {isValidatingReferral && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                  </div>
+                )}
+                {!isValidatingReferral && referralValid === true && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <Check className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
+              </div>
+              {referralValid === true && referrerName && (
+                <p className="mt-1 text-sm text-green-600">
+                  {referrerName}님의 추천으로 가입하면 1만원 할인 혜택!
+                </p>
+              )}
+              {referralValid === false && (
+                <p className="mt-1 text-sm text-red-600">유효하지 않은 추천 코드입니다.</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-start">
@@ -276,5 +374,19 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#6AAF50]" />
+        </div>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   )
 }

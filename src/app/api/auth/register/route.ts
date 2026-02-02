@@ -3,12 +3,18 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { sendVerificationEmail, generateVerificationToken } from '@/lib/email'
+import {
+  generateUniqueReferralCode,
+  validateReferralCode,
+  processSignupReferral,
+} from '@/lib/referral'
 
 const registerSchema = z.object({
   email: z.string().email('유효한 이메일 주소를 입력해주세요.'),
   password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다.'),
   name: z.string().min(2, '이름은 2자 이상이어야 합니다.'),
   phone: z.string().optional(),
+  referralCode: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -31,6 +37,18 @@ export async function POST(request: NextRequest) {
     // 비밀번호 해시화
     const hashedPassword = await bcrypt.hash(validatedData.password, 12)
 
+    // 추천 코드 검증 (있는 경우)
+    let referrerId: string | null = null
+    if (validatedData.referralCode) {
+      const referralValidation = await validateReferralCode(validatedData.referralCode)
+      if (referralValidation.valid && referralValidation.referrer) {
+        referrerId = referralValidation.referrer.id
+      }
+    }
+
+    // 새 사용자의 고유 추천 코드 생성
+    const newReferralCode = await generateUniqueReferralCode()
+
     // 사용자 생성
     const user = await prisma.user.create({
       data: {
@@ -38,8 +56,15 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         name: validatedData.name,
         phone: validatedData.phone || null,
+        referralCode: newReferralCode,
+        referredById: referrerId,
       },
     })
+
+    // 추천인이 있으면 보상 처리
+    if (referrerId) {
+      await processSignupReferral(referrerId, user.id)
+    }
 
     // 이메일 인증 토큰 생성
     const token = generateVerificationToken()
