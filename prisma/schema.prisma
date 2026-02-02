@@ -20,11 +20,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  enrollments Enrollment[]
-  posts       Post[]
-  comments    Comment[]
-  payments    Payment[]
-  reviews     Review[]
+  enrollments  Enrollment[]
+  posts        Post[]
+  comments     Comment[]
+  payments     Payment[]
+  reviews      Review[]
+  ownedCoupons Coupon[]   @relation("OwnedCoupons")
+  usedCoupons  Coupon[]   @relation("UsedCoupons")
 }
 
 model VerificationToken {
@@ -140,6 +142,7 @@ model Enrollment {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrolledAt  DateTime  @default(now())
   completedAt DateTime?
+  coupon      Coupon?
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -218,4 +221,30 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+enum CouponStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+model Coupon {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  ownerId      String
+  owner        User         @relation("OwnedCoupons", fields: [ownerId], references: [id], onDelete: Cascade)
+  usedById     String?
+  usedBy       User?        @relation("UsedCoupons", fields: [usedById], references: [id])
+  enrollmentId String       @unique
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id])
+  amount       Int          @default(30000)
+  status       CouponStatus @default(ACTIVE)
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([ownerId])
+  @@index([code])
+  @@index([status])
 }

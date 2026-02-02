@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2, BookOpen, Shield } from 'lucide-react'
+import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2, BookOpen, Shield, Ticket, X, Check } from 'lucide-react'
 
 interface Course {
   id: string
@@ -22,6 +22,14 @@ function CheckoutContent() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('card')
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string
+    code: string
+    amount: number
+  } | null>(null)
+  const [couponError, setCouponError] = useState('')
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
 
   const courseId = searchParams.get('courseId')
 
@@ -60,6 +68,49 @@ function CheckoutContent() {
     instructor: '김무역',
   })
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('쿠폰 코드를 입력해주세요.')
+      return
+    }
+
+    setIsValidatingCoupon(true)
+    setCouponError('')
+
+    try {
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim() }),
+      })
+
+      const result = await response.json()
+
+      if (result.valid && result.coupon) {
+        setAppliedCoupon({
+          id: result.coupon.id,
+          code: result.coupon.code,
+          amount: result.coupon.amount,
+        })
+        setCouponCode('')
+        setCouponError('')
+      } else {
+        setCouponError(result.error || '유효하지 않은 쿠폰입니다.')
+      }
+    } catch {
+      setCouponError('쿠폰 확인 중 오류가 발생했습니다.')
+    } finally {
+      setIsValidatingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+  }
+
+  const discountAmount = appliedCoupon?.amount || 0
+  const finalPrice = Math.max(0, (course?.price || 0) - discountAmount)
+
   const handlePayment = async () => {
     if (!agreedToTerms) {
       alert('결제 약관에 동의해주세요.')
@@ -68,10 +119,31 @@ function CheckoutContent() {
 
     setIsProcessing(true)
 
-    // 실제 결제 처리 대신 시뮬레이션
-    setTimeout(() => {
-      router.push(`/checkout/complete?courseId=${courseId}`)
-    }, 2000)
+    try {
+      // 쿠폰이 적용된 경우 사용 처리
+      if (appliedCoupon) {
+        const useResponse = await fetch('/api/coupons/use', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: appliedCoupon.code }),
+        })
+
+        if (!useResponse.ok) {
+          const error = await useResponse.json()
+          alert(error.error || '쿠폰 사용 처리 중 오류가 발생했습니다.')
+          setIsProcessing(false)
+          return
+        }
+      }
+
+      // 실제 결제 처리 대신 시뮬레이션
+      setTimeout(() => {
+        router.push(`/checkout/complete?courseId=${courseId}`)
+      }, 2000)
+    } catch {
+      alert('결제 처리 중 오류가 발생했습니다.')
+      setIsProcessing(false)
+    }
   }
 
   const paymentMethods = [
@@ -182,6 +254,66 @@ function CheckoutContent() {
               )}
             </div>
 
+            {/* Coupon */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Ticket className="h-5 w-5 text-[#6AAF50]" />
+                쿠폰 적용
+              </h2>
+
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-[#F5FAF3] border border-[#6AAF50] rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-[#6AAF50]" />
+                    <span className="font-medium text-[#5A9A44]">
+                      {appliedCoupon.code}
+                    </span>
+                    <span className="text-[#6AAF50]">
+                      (-{appliedCoupon.amount.toLocaleString()}원)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase())
+                        setCouponError('')
+                      }}
+                      placeholder="쿠폰 코드 입력"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50] uppercase"
+                      maxLength={8}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={isValidatingCoupon}
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium disabled:opacity-50"
+                    >
+                      {isValidatingCoupon ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        '적용'
+                      )}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-sm text-red-500">{couponError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Terms */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <label className="flex items-start space-x-3 cursor-pointer">
@@ -217,14 +349,16 @@ function CheckoutContent() {
                   <span>{course.price.toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>할인</span>
-                  <span className="text-red-500">-0원</span>
+                  <span>쿠폰 할인</span>
+                  <span className={discountAmount > 0 ? 'text-red-500' : ''}>
+                    {discountAmount > 0 ? `-${discountAmount.toLocaleString()}원` : '-0원'}
+                  </span>
                 </div>
               </div>
 
               <div className="flex justify-between py-4 text-lg font-bold">
                 <span>총 결제금액</span>
-                <span className="text-[#6AAF50]">{course.price.toLocaleString()}원</span>
+                <span className="text-[#6AAF50]">{finalPrice.toLocaleString()}원</span>
               </div>
 
               <button
@@ -238,7 +372,7 @@ function CheckoutContent() {
                     결제 처리 중...
                   </>
                 ) : (
-                  `${course.price.toLocaleString()}원 결제하기`
+                  `${finalPrice.toLocaleString()}원 결제하기`
                 )}
               </button>
 

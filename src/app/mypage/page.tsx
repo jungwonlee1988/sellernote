@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, BookOpen, CreditCard, MessageSquare, Settings, ChevronRight, Pencil } from 'lucide-react'
+import { User, BookOpen, CreditCard, MessageSquare, Settings, ChevronRight, Pencil, Ticket } from 'lucide-react'
 
 interface UserProfile {
   id: string
@@ -90,6 +90,12 @@ export default function MyPage() {
       title: '내 강의',
       description: '수강 중인 강의 확인',
       href: '/mypage/courses',
+    },
+    {
+      icon: Ticket,
+      title: '내 쿠폰',
+      description: '보유 쿠폰 확인 및 관리',
+      href: '/mypage/coupons',
     },
     {
       icon: CreditCard,
