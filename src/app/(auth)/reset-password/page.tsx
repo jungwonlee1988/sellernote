@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { BookOpen, Lock, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Lock, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import Image from 'next/image'
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다.'),
@@ -112,9 +113,15 @@ function ResetPasswordContent() {
   return (
     <div className="max-w-md w-full space-y-8">
       <div className="text-center">
-        <Link href="/" className="inline-flex items-center space-x-2">
-          <BookOpen className="h-10 w-10 text-[#6AAF50]" />
-          <span className="text-2xl font-bold text-gray-900">셀러노트</span>
+        <Link href="/" className="inline-block">
+          <Image
+            src="/logo.png"
+            alt="셀러노트"
+            width={200}
+            height={200}
+            className="h-20 w-auto mx-auto"
+            unoptimized
+          />
         </Link>
         <h2 className="mt-6 text-3xl font-bold text-gray-900">새 비밀번호 설정</h2>
         <p className="mt-2 text-gray-600">

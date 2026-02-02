@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { BookOpen, Mail, Lock, User, Phone, Loader2, CheckCircle } from 'lucide-react'
+import { Mail, Lock, User, Phone, Loader2, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
 
 const registerSchema = z.object({
   email: z.string().email('유효한 이메일 주소를 입력해주세요.'),
@@ -109,9 +110,15 @@ export default function RegisterPage() {
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <BookOpen className="h-10 w-10 text-[#6AAF50]" />
-            <span className="text-2xl font-bold text-gray-900">셀러노트</span>
+          <Link href="/" className="inline-block">
+            <Image
+              src="/logo.png"
+              alt="셀러노트"
+              width={200}
+              height={200}
+              className="h-20 w-auto mx-auto"
+              unoptimized
+            />
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">회원가입</h2>
           <p className="mt-2 text-gray-600">
