@@ -139,15 +139,19 @@ export default function OpenAPIPage() {
               <Code className="h-4 w-4 text-[#6AAF50]" />
               <span className="text-[#6AAF50] text-sm font-medium">Developer API</span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              무역업무를 위한
-              <br />
-              <span className="text-[#6AAF50]">Open API</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              <span className="sm:hidden">무역업무를<br />위한 <span className="text-[#6AAF50]">Open API</span></span>
+              <span className="hidden sm:inline">무역업무를 위한<br /><span className="text-[#6AAF50]">Open API</span></span>
             </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              무역서류 파싱부터 워크플로우 자동화까지,
-              <br />
-              토큰 기반의 합리적인 가격으로 제공합니다.
+            <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto mb-8 leading-relaxed">
+              <span className="sm:hidden">
+                무역서류 파싱부터<br />워크플로우 자동화까지,<br />
+                토큰 기반의 합리적인<br />가격으로 제공합니다.
+              </span>
+              <span className="hidden sm:inline">
+                무역서류 파싱부터 워크플로우 자동화까지,<br />
+                토큰 기반의 합리적인 가격으로 제공합니다.
+              </span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -243,13 +247,18 @@ export default function OpenAPIPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <p className="text-[#6AAF50] font-semibold text-lg mb-4">PRICING</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
               토큰 기반 합리적인 요금제
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              사용한 만큼만 지불하세요. API 호출 시 토큰이 차감되며,
-              <br />
-              서류 종류와 복잡도에 따라 토큰 사용량이 달라집니다.
+            <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              <span className="sm:hidden">
+                사용한 만큼만 지불하세요.<br />API 호출 시 토큰이 차감되며,<br />
+                서류 종류와 복잡도에 따라<br />토큰 사용량이 달라집니다.
+              </span>
+              <span className="hidden sm:inline">
+                사용한 만큼만 지불하세요. API 호출 시 토큰이 차감되며,<br />
+                서류 종류와 복잡도에 따라 토큰 사용량이 달라집니다.
+              </span>
             </p>
           </div>
 
@@ -344,11 +353,12 @@ export default function OpenAPIPage() {
       {/* CTA Section */}
       <section className="py-24 bg-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">
             지금 바로 시작하세요
           </h2>
-          <p className="text-xl text-gray-400 mb-10">
-            회원가입 후 무료 10,000 토큰을 받고 API를 테스트해보세요.
+          <p className="text-base sm:text-xl text-gray-400 mb-10">
+            <span className="sm:hidden">회원가입 후 무료 10,000 토큰을<br />받고 API를 테스트해보세요.</span>
+            <span className="hidden sm:inline">회원가입 후 무료 10,000 토큰을 받고 API를 테스트해보세요.</span>
           </p>
           <Link
             href="/register"

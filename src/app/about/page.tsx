@@ -53,13 +53,19 @@ export default function AboutPage() {
         <div className="absolute inset-0 bg-gradient-to-tr from-[#6AAF50]/10 via-transparent to-[#6AAF50]/5" />
 
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
-            무역을 쉽게 만들고 있습니다
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
+            <span className="sm:hidden">무역을 쉽게<br />만들고 있습니다</span>
+            <span className="hidden sm:inline">무역을 쉽게 만들고 있습니다</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto drop-shadow-lg">
-            복잡하고, 어렵고, 멀게 느껴지던 무역의 장벽을 허물어
-            <br className="hidden md:block" />
-            누구나 무역에 도전할 수 있는 세상을 만듭니다.
+          <p className="text-base sm:text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto drop-shadow-lg leading-relaxed">
+            <span className="sm:hidden">
+              복잡하고, 어렵고,<br />멀게 느껴지던 무역의 장벽을 허물어<br />
+              누구나 무역에 도전할 수 있는<br />세상을 만듭니다.
+            </span>
+            <span className="hidden sm:inline">
+              복잡하고, 어렵고, 멀게 느껴지던 무역의 장벽을 허물어<br />
+              누구나 무역에 도전할 수 있는 세상을 만듭니다.
+            </span>
           </p>
         </div>
 
@@ -169,11 +175,14 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <div className="text-center mb-12">
-            <p className="text-[#6AAF50] font-semibold text-lg mb-4">WHO WE ARE</p>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-              우리는 <span className="text-[#6AAF50]">무역</span>의 문턱을 낮추는
-              <br />
-              사람들입니다
+            <p className="text-[#6AAF50] font-semibold text-base sm:text-lg mb-4">WHO WE ARE</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+              <span className="sm:hidden">
+                우리는 <span className="text-[#6AAF50]">무역</span>의<br />문턱을 낮추는 사람들입니다
+              </span>
+              <span className="hidden sm:inline">
+                우리는 <span className="text-[#6AAF50]">무역</span>의 문턱을 낮추는<br />사람들입니다
+              </span>
             </h2>
           </div>
 
@@ -493,15 +502,20 @@ export default function AboutPage() {
               {/* Glow effect */}
               <div className="absolute inset-0 bg-[#6AAF50]/10 blur-3xl rounded-full" />
 
-              <h2 className="relative text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-8">
-                셀러노트는 오늘도
-                <br />
-                <span className="text-[#6AAF50]">무역을 더 쉽게</span> 만들기 위해
-                <br />
-                한 걸음씩 나아갑니다
+              <h2 className="relative text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-8">
+                <span className="sm:hidden">
+                  셀러노트는 오늘도<br />
+                  <span className="text-[#6AAF50]">무역을 더 쉽게</span><br />만들기 위해<br />
+                  한 걸음씩 나아갑니다
+                </span>
+                <span className="hidden sm:inline">
+                  셀러노트는 오늘도<br />
+                  <span className="text-[#6AAF50]">무역을 더 쉽게</span> 만들기 위해<br />
+                  한 걸음씩 나아갑니다
+                </span>
               </h2>
 
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+              <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
                 어제보다 오늘, 오늘보다 내일 더 쉬운 무역을 위해.
               </p>
 
@@ -643,11 +657,16 @@ export default function AboutPage() {
       <section className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <p className="text-[#6AAF50] font-semibold text-lg mb-4">OUR VISION</p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight">
-              셀러노트가 만들어갈
-              <br />
-              <span className="text-[#6AAF50]">새로운 무역</span>
+            <p className="text-[#6AAF50] font-semibold text-base sm:text-lg mb-4">OUR VISION</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight">
+              <span className="sm:hidden">
+                셀러노트가<br />만들어갈<br />
+                <span className="text-[#6AAF50]">새로운 무역</span>
+              </span>
+              <span className="hidden sm:inline">
+                셀러노트가 만들어갈<br />
+                <span className="text-[#6AAF50]">새로운 무역</span>
+              </span>
             </h2>
           </div>
 
@@ -742,11 +761,18 @@ export default function AboutPage() {
       {/* CTA Section */}
       <section className="py-32 bg-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            무역, 이제 쉽게 시작하세요
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-6">
+            <span className="sm:hidden">무역, 이제<br />쉽게 시작하세요</span>
+            <span className="hidden sm:inline">무역, 이제 쉽게 시작하세요</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-10">
-            셀러노트와 함께라면 1인 무역도 충분히 가능합니다. 현재 수입무역에 특화된 서비스를 제공합니다.
+          <p className="text-base sm:text-xl text-gray-400 mb-10 leading-relaxed">
+            <span className="sm:hidden">
+              셀러노트와 함께라면<br />1인 무역도 충분히 가능합니다.<br />
+              현재 수입무역에 특화된<br />서비스를 제공합니다.
+            </span>
+            <span className="hidden sm:inline">
+              셀러노트와 함께라면 1인 무역도 충분히 가능합니다.<br />현재 수입무역에 특화된 서비스를 제공합니다.
+            </span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

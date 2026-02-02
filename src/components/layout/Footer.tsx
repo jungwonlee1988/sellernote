@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="space-y-4">
             <Image
               src="/logo.png"
-              alt="SellerNote"
+              alt="셀러노트"
               width={100}
               height={100}
               className="h-10 w-auto brightness-0 invert"

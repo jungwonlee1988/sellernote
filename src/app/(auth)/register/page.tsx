@@ -111,7 +111,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center space-x-2">
             <BookOpen className="h-10 w-10 text-[#6AAF50]" />
-            <span className="text-2xl font-bold text-gray-900">SellerNote</span>
+            <span className="text-2xl font-bold text-gray-900">셀러노트</span>
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">회원가입</h2>
           <p className="mt-2 text-gray-600">

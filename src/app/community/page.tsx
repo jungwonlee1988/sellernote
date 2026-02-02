@@ -128,10 +128,13 @@ export default function CommunityPage() {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">커뮤니티</h1>
-              <p className="text-gray-600">수입무역에 대한 질문과 경험을 나눠보세요.</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">커뮤니티</h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                <span className="sm:hidden">수입무역에 대한 질문과<br />경험을 나눠보세요.</span>
+                <span className="hidden sm:inline">수입무역에 대한 질문과 경험을 나눠보세요.</span>
+              </p>
             </div>
             {session && (
               <Link

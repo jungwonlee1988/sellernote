@@ -136,8 +136,11 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">전체 강의</h1>
-          <p className="text-gray-600">수입무역 전문가가 되기 위한 다양한 강의를 만나보세요.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">전체 강의</h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            <span className="sm:hidden">수입무역 전문가가 되기 위한<br />다양한 강의를 만나보세요.</span>
+            <span className="hidden sm:inline">수입무역 전문가가 되기 위한 다양한 강의를 만나보세요.</span>
+          </p>
         </div>
       </div>
 

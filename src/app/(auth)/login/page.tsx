@@ -61,7 +61,7 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex items-center justify-center">
             <Image
               src="/logo.png"
-              alt="SellerNote"
+              alt="셀러노트"
               width={320}
               height={320}
               className="h-32 w-auto"

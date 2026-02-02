@@ -58,12 +58,21 @@ export default function Home() {
       <section className="bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              수입무역, 이제 제대로 배우세요
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
+              <span className="sm:hidden">수입무역,<br />이제 제대로 배우세요</span>
+              <span className="hidden sm:inline">수입무역, 이제 제대로 배우세요</span>
             </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              실무 중심의 체계적인 교육으로 수입무역 전문가로 성장하세요.
-              현직 전문가들이 직접 가르치는 실전 노하우를 배워보세요.
+            <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
+              <span className="sm:hidden">
+                실무 중심의 체계적인 교육으로<br />
+                수입무역 전문가로 성장하세요.<br />
+                현직 전문가들이 직접 가르치는<br />
+                실전 노하우를 배워보세요.
+              </span>
+              <span className="hidden sm:inline">
+                실무 중심의 체계적인 교육으로 수입무역 전문가로 성장하세요.<br />
+                현직 전문가들이 직접 가르치는 실전 노하우를 배워보세요.
+              </span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -88,11 +97,12 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-black mb-4">
-              왜 SellerNote인가요?
+            <h2 className="text-2xl sm:text-3xl font-bold text-black mb-4">
+              왜 셀러노트인가요?
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              SellerNote만의 차별화된 교육 시스템으로 수입무역 전문가로 성장하세요.
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base px-2 sm:px-0">
+              <span className="sm:hidden">셀러노트만의 차별화된 교육 시스템으로<br />수입무역 전문가로 성장하세요.</span>
+              <span className="hidden sm:inline">셀러노트만의 차별화된 교육 시스템으로 수입무역 전문가로 성장하세요.</span>
             </p>
           </div>
 
@@ -118,12 +128,12 @@ export default function Home() {
       {/* Popular Courses Section */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-black mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-black mb-2">
                 인기 강의
               </h2>
-              <p className="text-gray-600">가장 많은 수강생이 선택한 강의입니다.</p>
+              <p className="text-gray-600 text-sm sm:text-base">가장 많은 수강생이 선택한 강의입니다.</p>
             </div>
             <Link
               href="/courses"
@@ -170,12 +180,18 @@ export default function Home() {
       {/* CTA Section */}
       <section className="bg-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             지금 바로 시작하세요
           </h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            회원가입하고 무료 강의 미리보기를 체험해보세요.
-            수입무역 전문가로의 첫걸음을 SellerNote와 함께하세요.
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed px-2 sm:px-0">
+            <span className="sm:hidden">
+              회원가입하고 무료 강의<br />미리보기를 체험해보세요.<br />
+              수입무역 전문가로의 첫걸음을<br />셀러노트와 함께하세요.
+            </span>
+            <span className="hidden sm:inline">
+              회원가입하고 무료 강의 미리보기를 체험해보세요.<br />
+              수입무역 전문가로의 첫걸음을 셀러노트와 함께하세요.
+            </span>
           </p>
           <Link
             href="/register"

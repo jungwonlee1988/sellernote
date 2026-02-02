@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SellerNote - 수입무역 전문 교육",
+  title: "셀러노트 - 수입무역 전문 교육",
   description: "수입무역 실무 전문 교육 플랫폼. 통관, 물류, 무역실무를 배워보세요.",
   keywords: ["수입무역", "무역교육", "통관", "물류", "무역실무"],
 };

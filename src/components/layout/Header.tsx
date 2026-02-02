@@ -32,7 +32,7 @@ export default function Header() {
             <Link href="/" className="flex items-center">
               <Image
                 src="/logo.png"
-                alt="SellerNote"
+                alt="셀러노트"
                 width={120}
                 height={120}
                 className="h-12 w-auto"

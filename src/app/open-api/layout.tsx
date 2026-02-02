@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Open API | SellerNote',
+  title: 'Open API | 셀러노트',
   description: '무역서류 파서, 워크플로우 자동화 API. 토큰 기반 합리적인 가격으로 무역업무를 자동화하세요.',
 }
 
