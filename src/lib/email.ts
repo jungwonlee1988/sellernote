@@ -1,12 +1,20 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors
+let resend: Resend | null = null;
+
+function getResendClient() {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: 'SellerNote <onboarding@resend.dev>',
       to: email,
       subject: '[SellerNote] 이메일 인증을 완료해주세요',
@@ -77,7 +85,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: 'SellerNote <onboarding@resend.dev>',
       to: email,
       subject: '[SellerNote] 비밀번호 재설정',
