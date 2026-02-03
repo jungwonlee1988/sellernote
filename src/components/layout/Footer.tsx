@@ -39,11 +39,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/open-api" className="hover:text-[#6AAF50] transition-colors">
-                  Open API
-                </Link>
-              </li>
-              <li>
                 <Link href="/community" className="hover:text-[#6AAF50] transition-colors">
                   커뮤니티
                 </Link>

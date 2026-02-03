@@ -14,7 +14,6 @@ export default function Header() {
   const navigation = [
     { name: '회사소개', href: '/about' },
     { name: '강의', href: '/courses' },
-    { name: 'Open API', href: '/open-api' },
     { name: '커뮤니티', href: '/community' },
     { name: '블로그', href: 'https://blog.example.com', external: true },
   ]

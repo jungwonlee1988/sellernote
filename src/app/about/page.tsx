@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Ship, ShoppingCart, ArrowRight, ArrowDown } from 'lucide-react'
+import { BookOpen, Ship, ShoppingCart, ArrowRight, ArrowDown, FileJson, Workflow } from 'lucide-react'
 
 export default function AboutPage() {
   const scrollToMission = () => {
@@ -754,6 +754,76 @@ export default function AboutPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* API Protocol Section */}
+          <div className="mt-16 bg-gradient-to-br from-gray-900 to-black rounded-3xl p-8 md:p-12 border border-gray-800">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-[#6AAF50]/20 rounded-full px-4 py-2 mb-4">
+                <div className="w-2 h-2 bg-[#6AAF50] rounded-full animate-pulse" />
+                <span className="text-[#6AAF50] font-medium text-sm">FOR DEVELOPERS</span>
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                무역 데이터 <span className="text-[#6AAF50]">API 프로토콜</span>
+              </h3>
+              <p className="text-gray-400 max-w-2xl mx-auto">
+                셀러노트의 무역 기술을 구독형 API로 제공합니다.<br />
+                개발자 친화적인 JSON 형태로 무역 업무를 자동화하세요.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Document Parser API */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-[#6AAF50]/30 transition-all">
+                <div className="w-12 h-12 bg-[#6AAF50]/20 rounded-xl flex items-center justify-center mb-4">
+                  <FileJson className="h-6 w-6 text-[#6AAF50]" />
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">무역서류 파싱 API</h4>
+                <p className="text-gray-400 text-sm mb-4">
+                  인보이스, 패킹리스트, B/L, 원산지증명서 등 각종 무역서류를
+                  개발 가능한 JSON 형태로 자동 변환합니다.
+                </p>
+                <div className="bg-black/50 rounded-lg p-4 font-mono text-xs text-gray-300">
+                  <span className="text-[#6AAF50]">{`{`}</span><br />
+                  &nbsp;&nbsp;<span className="text-blue-400">"invoice"</span>: {`{`}<br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">"seller"</span>: <span className="text-yellow-300">"..."</span>,<br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">"items"</span>: [...]<br />
+                  &nbsp;&nbsp;{`}`}<br />
+                  <span className="text-[#6AAF50]">{`}`}</span>
+                </div>
+              </div>
+
+              {/* Workflow Automation API */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-[#6AAF50]/30 transition-all">
+                <div className="w-12 h-12 bg-[#6AAF50]/20 rounded-xl flex items-center justify-center mb-4">
+                  <Workflow className="h-6 w-6 text-[#6AAF50]" />
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">워크플로우 자동화 API</h4>
+                <p className="text-gray-400 text-sm mb-4">
+                  수입 통관, 발주 관리, 재고 연동 등 무역 업무 프로세스를
+                  API로 자동화하여 시스템에 통합할 수 있습니다.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-[#6AAF50]/20 text-[#6AAF50] text-xs px-3 py-1 rounded-full">통관 자동화</span>
+                  <span className="bg-[#6AAF50]/20 text-[#6AAF50] text-xs px-3 py-1 rounded-full">발주 연동</span>
+                  <span className="bg-[#6AAF50]/20 text-[#6AAF50] text-xs px-3 py-1 rounded-full">재고 동기화</span>
+                  <span className="bg-[#6AAF50]/20 text-[#6AAF50] text-xs px-3 py-1 rounded-full">정산 자동화</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm mb-4">
+                API 도입 문의는 아래 이메일로 연락해주세요.
+              </p>
+              <a
+                href="mailto:api@seller-note.com"
+                className="inline-flex items-center gap-2 text-[#6AAF50] font-medium hover:underline"
+              >
+                api@seller-note.com
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
