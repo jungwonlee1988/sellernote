@@ -15,9 +15,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "셀러노트 - 수입무역 전문 교육",
-  description: "수입무역 실무 전문 교육 플랫폼. 통관, 물류, 무역실무를 배워보세요.",
-  keywords: ["수입무역", "무역교육", "통관", "물류", "무역실무"],
+  title: {
+    default: "수입무역 교육은 셀러노트 | 실무 중심 무역 강의 플랫폼",
+    template: "%s | 셀러노트",
+  },
+  description: "수입무역 입문부터 통관실무까지, 현직 전문가에게 배우는 실전 무역 교육. 체계적 커리큘럼과 수료증 발급, 취업 연계까지 셀러노트에서 시작하세요.",
+  keywords: ["수입무역", "무역교육", "통관실무", "수입 강의", "무역 입문", "알리바바 소싱", "중국 수입"],
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "https://edu.seller-note.com",
+    siteName: "셀러노트",
+    title: "수입무역 교육은 셀러노트 | 실무 중심 무역 강의 플랫폼",
+    description: "수입무역 입문부터 통관실무까지, 현직 전문가에게 배우는 실전 무역 교육. 체계적 커리큘럼과 수료증 발급, 취업 연계까지 셀러노트에서 시작하세요.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "수입무역 교육은 셀러노트 | 실무 중심 무역 강의 플랫폼",
+    description: "수입무역 입문부터 통관실무까지, 현직 전문가에게 배우는 실전 무역 교육.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

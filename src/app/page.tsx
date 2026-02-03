@@ -1,5 +1,15 @@
 import Link from 'next/link'
 import { ArrowRight, BookOpen, Users, Award, TrendingUp } from 'lucide-react'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: '수입무역 교육은 셀러노트 | 실무 중심 무역 강의 플랫폼',
+  description: '수입무역 입문부터 통관실무까지, 현직 전문가에게 배우는 실전 무역 교육. 체계적 커리큘럼과 수료증 발급, 취업 연계까지 셀러노트에서 시작하세요.',
+  openGraph: {
+    title: '수입무역 교육은 셀러노트 | 실무 중심 무역 강의 플랫폼',
+    description: '수입무역 입문부터 통관실무까지, 현직 전문가에게 배우는 실전 무역 교육. 체계적 커리큘럼과 수료증 발급, 취업 연계까지 셀러노트에서 시작하세요.',
+  },
+}
 
 export default function Home() {
   const features = [
