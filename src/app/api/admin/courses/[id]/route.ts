@@ -34,13 +34,14 @@ const updateCourseSchema = z.object({
     videoUrl: z.string().nullable().optional(),
     duration: z.number().nullable().optional(),
     order: z.number(),
+    isPublic: z.boolean().optional(),
   })).optional(),
   schedules: z.array(z.object({
     date: z.string(),
     title: z.string().nullable().optional(),
   })).optional(),
   tagIds: z.array(z.string()).optional(),
-})
+}).strict()
 
 // 강의 상세 조회
 export async function GET(
@@ -129,24 +130,77 @@ export async function PATCH(
     }
 
     // lessons, schedules, tagIds 분리
-    const { lessons, schedules, tagIds, startDate, endDate, earlyBirdEndDate, ...courseData } = validatedData
+    const { lessons, schedules, tagIds } = validatedData
 
-    // 강의 업데이트 데이터 준비
-    const updateData: Record<string, unknown> = { ...courseData }
-    if (startDate !== undefined) {
-      updateData.startDate = startDate ? new Date(startDate) : null
+    // 강의 업데이트 데이터 준비 (명시적으로 허용된 필드만 포함)
+    const updateData: Record<string, unknown> = {}
+
+    // 허용된 필드 목록
+    const allowedFields = [
+      'title', 'subtitle', 'description', 'price', 'thumbnail',
+      'category', 'level', 'instructor', 'isPublished',
+      'capacity', 'location', 'locationAddress', 'locationUrl',
+      'educationTime', 'targetAudience', 'benefits'
+    ] as const
+
+    for (const field of allowedFields) {
+      if (field in validatedData && validatedData[field] !== undefined) {
+        updateData[field] = validatedData[field]
+      }
     }
-    if (endDate !== undefined) {
-      updateData.endDate = endDate ? new Date(endDate) : null
+
+    // 날짜 필드 변환
+    if ('startDate' in validatedData) {
+      updateData.startDate = validatedData.startDate ? new Date(validatedData.startDate) : null
     }
-    if (earlyBirdEndDate !== undefined) {
-      updateData.earlyBirdEndDate = earlyBirdEndDate ? new Date(earlyBirdEndDate) : null
+    if ('endDate' in validatedData) {
+      updateData.endDate = validatedData.endDate ? new Date(validatedData.endDate) : null
+    }
+    if ('earlyBirdEndDate' in validatedData) {
+      updateData.earlyBirdEndDate = validatedData.earlyBirdEndDate ? new Date(validatedData.earlyBirdEndDate) : null
+    }
+    if ('earlyBirdPrice' in validatedData) {
+      updateData.earlyBirdPrice = validatedData.earlyBirdPrice
+    }
+
+    // search_vector 컬럼 존재 여부 확인 및 추가 (트리거 호환성)
+    const columnCheck = await prisma.$queryRaw<{exists: boolean}[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Course' AND column_name = 'search_vector'
+      ) as exists
+    `
+    if (!columnCheck[0]?.exists) {
+      await prisma.$executeRaw`
+        ALTER TABLE "Course" ADD COLUMN IF NOT EXISTS "search_vector" tsvector
+      `
     }
 
     // 강의 업데이트
     await prisma.course.update({
       where: { id },
-      data: updateData,
+      data: {
+        title: updateData.title as string | undefined,
+        subtitle: updateData.subtitle as string | null | undefined,
+        description: updateData.description as string | undefined,
+        price: updateData.price as number | undefined,
+        thumbnail: updateData.thumbnail as string | null | undefined,
+        category: updateData.category as string | undefined,
+        level: updateData.level as string | undefined,
+        instructor: updateData.instructor as string | undefined,
+        isPublished: updateData.isPublished as boolean | undefined,
+        capacity: updateData.capacity as number | null | undefined,
+        earlyBirdPrice: updateData.earlyBirdPrice as number | null | undefined,
+        earlyBirdEndDate: updateData.earlyBirdEndDate as Date | null | undefined,
+        location: updateData.location as string | null | undefined,
+        locationAddress: updateData.locationAddress as string | null | undefined,
+        locationUrl: updateData.locationUrl as string | null | undefined,
+        educationTime: updateData.educationTime as string | null | undefined,
+        targetAudience: updateData.targetAudience as string[] | undefined,
+        benefits: updateData.benefits as string[] | undefined,
+        startDate: updateData.startDate as Date | null | undefined,
+        endDate: updateData.endDate as Date | null | undefined,
+      },
     })
 
     // 레슨 업데이트 (있는 경우)
@@ -164,6 +218,7 @@ export async function PATCH(
             videoUrl: lesson.videoUrl || null,
             duration: lesson.duration || null,
             order: lesson.order ?? index + 1,
+            isPublic: lesson.isPublic || false,
           })),
         })
       }
@@ -224,15 +279,52 @@ export async function PATCH(
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
+      // Zod 유효성 검사 오류 상세 메시지
+      const errorMessages = error.issues.map(issue => {
+        const path = issue.path.join('.')
+        return path ? `${path}: ${issue.message}` : issue.message
+      })
       return NextResponse.json(
-        { error: error.issues[0].message },
+        {
+          error: '입력값 오류',
+          details: errorMessages,
+          message: errorMessages.join(', ')
+        },
         { status: 400 }
       )
     }
 
     console.error('Update course error:', error)
+
+    // Prisma 오류 상세 처리
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; message?: string; meta?: Record<string, unknown> }
+      let errorMessage = '데이터베이스 오류가 발생했습니다.'
+
+      switch (prismaError.code) {
+        case 'P2002':
+          errorMessage = '중복된 데이터가 존재합니다.'
+          break
+        case 'P2022':
+          errorMessage = `존재하지 않는 필드가 포함되어 있습니다: ${prismaError.meta?.column || '알 수 없음'}`
+          break
+        case 'P2025':
+          errorMessage = '해당 데이터를 찾을 수 없습니다.'
+          break
+        default:
+          errorMessage = `데이터베이스 오류 (${prismaError.code}): ${prismaError.message || '알 수 없는 오류'}`
+      }
+
+      return NextResponse.json(
+        { error: errorMessage, code: prismaError.code },
+        { status: 500 }
+      )
+    }
+
+    // 일반 오류
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
     return NextResponse.json(
-      { error: '강의 수정 중 오류가 발생했습니다.' },
+      { error: `강의 수정 중 오류: ${errorMessage}` },
       { status: 500 }
     )
   }

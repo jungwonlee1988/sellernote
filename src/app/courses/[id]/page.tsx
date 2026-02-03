@@ -10,6 +10,7 @@ import {
   Clock,
   Users,
   PlayCircle,
+  Play,
   CheckCircle,
   ChevronDown,
   ChevronUp,
@@ -26,6 +27,7 @@ import {
   Award,
   AlertCircle,
   ExternalLink,
+  Video,
 } from 'lucide-react'
 
 interface Lesson {
@@ -60,6 +62,7 @@ interface Course {
   category: string
   level: string
   instructor: string
+  courseType: 'ONLINE' | 'OFFLINE' | 'LIVE_ONLINE' | 'LIVE_OFFLINE' | 'RECORDED'
   startDate: string | null
   endDate: string | null
   lessons: Lesson[]
@@ -121,11 +124,26 @@ export default function CourseDetailPage() {
   const [reviewContent, setReviewContent] = useState('')
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [isEditingReview, setIsEditingReview] = useState(false)
+  const [isReserving, setIsReserving] = useState(false)
+  const [reservationCount, setReservationCount] = useState(0)
 
   useEffect(() => {
     fetchCourse()
     fetchReviews()
+    fetchReservationCount()
   }, [params.id])
+
+  const fetchReservationCount = async () => {
+    try {
+      const response = await fetch(`/api/courses/${params.id}/reservations/count`)
+      if (response.ok) {
+        const data = await response.json()
+        setReservationCount(data.count)
+      }
+    } catch {
+      console.error('Failed to fetch reservation count')
+    }
+  }
 
   const fetchCourse = async () => {
     setIsLoading(true)
@@ -199,6 +217,7 @@ export default function CourseDetailPage() {
         category: '무역기초',
         level: '입문',
         instructor: '김무역',
+        courseType: 'OFFLINE',
         startDate: '2026-02-15',
         endDate: '2026-02-15',
         capacity: 30,
@@ -240,6 +259,7 @@ export default function CourseDetailPage() {
         category: '통관',
         level: '중급',
         instructor: '이관세',
+        courseType: 'OFFLINE',
         startDate: '2026-02-22',
         endDate: '2026-02-22',
         capacity: 25,
@@ -280,6 +300,34 @@ export default function CourseDetailPage() {
       return
     }
     router.push(`/checkout?courseId=${course?.id}`)
+  }
+
+  const handleReservation = async () => {
+    if (!session) {
+      router.push('/login')
+      return
+    }
+
+    setIsReserving(true)
+    try {
+      const response = await fetch(`/api/courses/${params.id}/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert(`예약이 완료되었습니다. 대기 순번: ${data.position}번`)
+        fetchReservationCount()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || '예약에 실패했습니다.')
+      }
+    } catch {
+      setError('예약 중 오류가 발생했습니다.')
+    } finally {
+      setIsReserving(false)
+    }
   }
 
   const handleSubmitReview = async () => {
@@ -423,6 +471,22 @@ export default function CourseDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="flex flex-wrap items-center gap-2 mb-4">
+                {(course.courseType === 'ONLINE' || course.courseType === 'LIVE_ONLINE') ? (
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                    <Video className="h-3.5 w-3.5" />
+                    라이브 온라인
+                  </span>
+                ) : course.courseType === 'RECORDED' ? (
+                  <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    녹화 강의
+                  </span>
+                ) : (
+                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    라이브 오프라인
+                  </span>
+                )}
                 <span className="bg-[#E8F5E3] text-[#5A9A44] px-3 py-1 rounded-full text-sm font-medium">
                   {course.category}
                 </span>
@@ -540,10 +604,10 @@ export default function CourseDetailPage() {
                   }`}>
                     <div className="flex items-center justify-between">
                       <span className={`text-sm font-medium ${
-                        isSoldOut ? 'text-gray-600' :
+                        isSoldOut ? 'text-orange-600' :
                         isAlmostFull ? 'text-red-600' : 'text-[#6AAF50]'
                       }`}>
-                        {isSoldOut ? '마감되었습니다' :
+                        {isSoldOut ? `정원 마감 (예약 대기 ${reservationCount}명)` :
                          isAlmostFull ? `마감임박! 잔여 ${remainingSeats}석` :
                          `잔여 ${remainingSeats}석`}
                       </span>
@@ -572,10 +636,25 @@ export default function CourseDetailPage() {
 
                 {isSoldOut ? (
                   <button
-                    disabled
-                    className="w-full bg-gray-400 text-white py-3 rounded-lg font-medium cursor-not-allowed"
+                    onClick={handleReservation}
+                    disabled={isReserving}
+                    className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50"
                   >
-                    마감되었습니다
+                    {isReserving ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                        처리 중...
+                      </span>
+                    ) : (
+                      <>
+                        예약하기
+                        {reservationCount > 0 && (
+                          <span className="ml-1 text-sm opacity-80">
+                            (대기 {reservationCount}명)
+                          </span>
+                        )}
+                      </>
+                    )}
                   </button>
                 ) : isEnrolled ? (
                   <div className="bg-green-50 text-green-600 px-4 py-3 rounded-lg flex items-center justify-center mb-4">
@@ -1042,10 +1121,11 @@ export default function CourseDetailPage() {
               </div>
               {isSoldOut ? (
                 <button
-                  disabled
-                  className="bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium cursor-not-allowed"
+                  onClick={handleReservation}
+                  disabled={isReserving}
+                  className="bg-orange-500 text-white px-6 py-2.5 rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50 whitespace-nowrap"
                 >
-                  마감
+                  {isReserving ? '처리 중...' : `예약하기${reservationCount > 0 ? ` (${reservationCount})` : ''}`}
                 </button>
               ) : isEnrolled ? (
                 <div className="bg-green-50 text-green-600 px-4 py-2 rounded-lg flex items-center">

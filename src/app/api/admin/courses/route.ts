@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: '접근 권한이 없습니다.' },
         { status: 403 }
@@ -20,6 +20,7 @@ export async function GET() {
           select: {
             enrollments: true,
             lessons: true,
+            reservations: true,
           },
         },
       },
@@ -42,6 +43,7 @@ interface LessonInput {
   videoUrl?: string | null
   duration?: number | null
   order?: number
+  isPublic?: boolean
 }
 
 interface ScheduleInput {
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: '접근 권한이 없습니다.' },
         { status: 403 }
@@ -68,8 +70,15 @@ export async function POST(request: NextRequest) {
       price,
       instructor,
       thumbnail,
+      courseType,
+      capacity,
       startDate,
       endDate,
+      // VOD 설정
+      vodEnabled,
+      vodFreeDays,
+      vodPrice,
+      vodExpiryDays,
       lessons,
       schedules,
       tagIds,
@@ -84,8 +93,15 @@ export async function POST(request: NextRequest) {
         price,
         instructor,
         thumbnail: thumbnail || null,
+        courseType: courseType || 'LIVE_OFFLINE',
+        capacity: capacity || null,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
+        // VOD 설정
+        vodEnabled: vodEnabled || false,
+        vodFreeDays: vodFreeDays || null,
+        vodPrice: vodPrice || null,
+        vodExpiryDays: vodExpiryDays || null,
         isPublished: false,
         lessons: {
           create: lessons?.map((lesson: LessonInput, index: number) => ({
@@ -94,6 +110,7 @@ export async function POST(request: NextRequest) {
             videoUrl: lesson.videoUrl || null,
             duration: lesson.duration || null,
             order: lesson.order ?? index + 1,
+            isPublic: lesson.isPublic || false,
           })) || [],
         },
         schedules: {

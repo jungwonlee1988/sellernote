@@ -35,6 +35,22 @@ model User {
   usedCoupons      Coupon[]         @relation("UsedCoupons")
   givenRewards     ReferralReward[] @relation("GivenRewards")
   receivedRewards  ReferralReward[] @relation("ReceivedRewards")
+
+  // 화상 수업 관련
+  instructedSessions   LiveSession[]          @relation("InstructorSessions")
+  participatedSessions SessionParticipant[]
+  chatMessages         ChatMessage[]
+  questions            LiveQuestion[]
+  questionAnswers      LiveQuestion[]         @relation("QuestionAnswers")
+  questionUpvotes      QuestionUpvote[]
+  recordingViews       RecordingViewLog[]
+
+  // 과제 관련
+  submissions          AssignmentSubmission[]
+  gradedSubmissions    AssignmentSubmission[] @relation("GradedSubmissions")
+
+  // 예약 관련
+  reservations         CourseReservation[]
 }
 
 model VerificationToken {
@@ -68,30 +84,68 @@ model Course {
   level        String
   instructor   String
   isPublished  Boolean                   @default(false)
+  courseType   CourseType                @default(LIVE_OFFLINE)  // 강의 유형
   startDate    DateTime?
   endDate      DateTime?
   searchVector Unsupported("tsvector")?
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
 
-  // 오프라인 교육 관련 필드
+  // 라이브 교육 관련 필드
   capacity          Int?                  // 정원
   earlyBirdPrice    Int?                  // 얼리버드 가격
   earlyBirdEndDate  DateTime?             // 얼리버드 마감일
-  location          String?               // 교육 장소
+  location          String?               // 교육 장소 (오프라인)
   locationAddress   String?               // 상세 주소
   locationUrl       String?               // 지도 URL
   educationTime     String?               // 교육 시간 (예: 10:00~17:00)
   targetAudience    String[]              // 추천 대상
   benefits          String[]              // 교육 후 얻어가는 것
 
-  lessons     Lesson[]
-  enrollments Enrollment[]
-  reviews     Review[]
-  schedules   CourseSchedule[]
-  tags        CourseTag[]
+  // VOD 관련 필드
+  vodEnabled        Boolean               @default(false)  // VOD 제공 여부
+  vodFreeDays       Int?                  // 종료일 + N일 무료 제공 (라이브 강의)
+  vodPrice          Int?                  // VOD 추가 결제 금액
+  vodExpiryDays     Int?                  // VOD 시청 기간 (녹화 강의: 결제일로부터 N일)
+
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  reviews      Review[]
+  schedules    CourseSchedule[]
+  tags         CourseTag[]
+  reservations CourseReservation[]       // 예약 대기 목록
+
+  // 화상 수업 및 과제 관련
+  liveSessions LiveSession[]
+  assignments  Assignment[]
 
   @@index([searchVector], type: Gin)
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#6B7280")
+  icon        String?  // 아이콘 이름 (lucide)
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+model Level {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
 }
 
 model Tag {
@@ -128,16 +182,48 @@ model CourseSchedule {
   @@index([courseId])
 }
 
+model CourseReservation {
+  id          String            @id @default(cuid())
+  courseId    String
+  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ReservationStatus @default(WAITING)
+  position    Int               // 대기 순번
+  phone       String?           // 연락처
+  message     String?           // 예약 메시지
+  notifiedAt  DateTime?         // 알림 발송 시간
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId, status])
+  @@index([userId])
+}
+
+enum ReservationStatus {
+  WAITING     // 대기 중
+  NOTIFIED    // 자리 생김 알림 발송됨
+  CONFIRMED   // 수강 확정
+  CANCELLED   // 취소됨
+  EXPIRED     // 만료됨 (알림 후 미응답)
+}
+
 model Lesson {
   id        String   @id @default(cuid())
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title     String
   content   String?  @db.Text
-  videoUrl  String?
-  duration  Int?
+  videoUrl  String?           // 영상 URL (직접 업로드 또는 외부 링크)
+  duration  Int?              // 영상 길이 (분)
   order     Int
+  isPublic  Boolean  @default(false)  // VOD 공개 여부
   createdAt DateTime @default(now())
+
+  // 화상 수업 및 과제 관련
+  liveSessions LiveSession[]
+  assignments  Assignment[]
 
   @@index([courseId])
 }
@@ -231,6 +317,14 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum CourseType {
+  ONLINE         // (deprecated) 기존 온라인 -> LIVE_ONLINE으로 사용
+  OFFLINE        // (deprecated) 기존 오프라인 -> LIVE_OFFLINE으로 사용
+  LIVE_ONLINE    // 라이브 온라인 (화상 수업)
+  LIVE_OFFLINE   // 라이브 오프라인 (현장 수업)
+  RECORDED       // 녹화 강의 (VOD)
+}
+
 enum CouponStatus {
   ACTIVE
   USED
@@ -282,4 +376,270 @@ enum RewardStatus {
   PENDING   // 대기중
   CONFIRMED // 확정
   PAID      // 지급완료
+}
+
+// ============================================
+// 화상 수업 관련 모델
+// ============================================
+
+model LiveSession {
+  id              String            @id @default(cuid())
+  lessonId        String?
+  lesson          Lesson?           @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  courseId        String
+  course          Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructorId    String
+  instructor      User              @relation("InstructorSessions", fields: [instructorId], references: [id])
+
+  title           String
+  description     String?           @db.Text
+  roomId          String            @unique
+
+  scheduledAt     DateTime
+  startedAt       DateTime?
+  endedAt         DateTime?
+  duration        Int?
+
+  status          SessionStatus     @default(SCHEDULED)
+  maxParticipants Int               @default(100)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  recordings      SessionRecording[]
+  participants    SessionParticipant[]
+  chatMessages    ChatMessage[]
+  questions       LiveQuestion[]
+
+  @@index([courseId])
+  @@index([instructorId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model SessionParticipant {
+  id          String       @id @default(cuid())
+  sessionId   String
+  session     LiveSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt    DateTime     @default(now())
+  leftAt      DateTime?
+  totalTime   Int          @default(0)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+// ============================================
+// 녹화 관련 모델
+// ============================================
+
+model SessionRecording {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     LiveSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  title       String?
+  egressId    String          @unique
+
+  storageType StorageType     @default(SUPABASE)
+  storagePath String
+  fileUrl     String?
+  thumbnailUrl String?
+
+  duration    Int?
+  fileSize    BigInt?
+
+  status      RecordingStatus @default(PROCESSING)
+
+  createdAt   DateTime        @default(now())
+  processedAt DateTime?
+
+  viewLogs    RecordingViewLog[]
+
+  @@index([sessionId])
+  @@index([status])
+}
+
+enum StorageType {
+  SUPABASE
+  S3
+  GCS
+}
+
+enum RecordingStatus {
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+model RecordingViewLog {
+  id           String           @id @default(cuid())
+  recordingId  String
+  recording    SessionRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  watchedAt    DateTime         @default(now())
+  watchTime    Int              @default(0)
+  lastPosition Int              @default(0)
+  completed    Boolean          @default(false)
+
+  @@unique([recordingId, userId])
+  @@index([recordingId])
+  @@index([userId])
+}
+
+// ============================================
+// 실시간 Q&A / 채팅 모델
+// ============================================
+
+model ChatMessage {
+  id          String       @id @default(cuid())
+  sessionId   String
+  session     LiveSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content     String       @db.Text
+  messageType MessageType  @default(CHAT)
+
+  createdAt   DateTime     @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+}
+
+enum MessageType {
+  CHAT
+  SYSTEM
+  NOTICE
+}
+
+model LiveQuestion {
+  id           String           @id @default(cuid())
+  sessionId    String
+  session      LiveSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content      String           @db.Text
+  isAnonymous  Boolean          @default(false)
+
+  status       QuestionStatus   @default(PENDING)
+  upvotes      Int              @default(0)
+
+  answeredAt   DateTime?
+  answer       String?          @db.Text
+  answeredById String?
+  answeredBy   User?            @relation("QuestionAnswers", fields: [answeredById], references: [id])
+
+  createdAt    DateTime         @default(now())
+
+  questionUpvotes QuestionUpvote[]
+
+  @@index([sessionId, status])
+  @@index([sessionId, upvotes])
+}
+
+enum QuestionStatus {
+  PENDING
+  ANSWERED
+  DISMISSED
+}
+
+model QuestionUpvote {
+  id          String       @id @default(cuid())
+  questionId  String
+  question    LiveQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+
+  @@unique([questionId, userId])
+}
+
+// ============================================
+// 과제 시스템 모델
+// ============================================
+
+model Assignment {
+  id           String             @id @default(cuid())
+  courseId     String
+  course       Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId     String?
+  lesson       Lesson?            @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  title        String
+  description  String             @db.Text
+  instructions String?            @db.Text
+
+  dueDate      DateTime?
+  maxScore     Int                @default(100)
+  passingScore Int                @default(60)
+
+  allowLateSubmission Boolean     @default(false)
+  latePenaltyPercent  Int         @default(10)
+
+  attachments  String[]
+
+  status       AssignmentStatus   @default(DRAFT)
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  submissions  AssignmentSubmission[]
+
+  @@index([courseId])
+  @@index([dueDate])
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+model AssignmentSubmission {
+  id            String           @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content       String?          @db.Text
+  attachments   String[]
+
+  submittedAt   DateTime         @default(now())
+  isLate        Boolean          @default(false)
+
+  score         Int?
+  feedback      String?          @db.Text
+  gradedAt      DateTime?
+  gradedById    String?
+  gradedBy      User?            @relation("GradedSubmissions", fields: [gradedById], references: [id])
+
+  status        SubmissionStatus @default(SUBMITTED)
+
+  @@unique([assignmentId, userId])
+  @@index([assignmentId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  RETURNED
 }

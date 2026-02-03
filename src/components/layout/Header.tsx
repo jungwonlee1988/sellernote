@@ -14,8 +14,8 @@ export default function Header() {
   const navigation = [
     { name: '회사소개', href: '/about' },
     { name: '강의', href: '/courses' },
+    { name: '화상수업', href: '/live' },
     { name: '커뮤니티', href: '/community' },
-    { name: '블로그', href: 'https://blog.example.com', external: true },
   ]
 
   const handleSignOut = () => {
@@ -97,6 +97,20 @@ export default function Header() {
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       내 강의
+                    </Link>
+                    <Link
+                      href="/recordings"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      녹화 다시보기
+                    </Link>
+                    <Link
+                      href="/assignments"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      과제
                     </Link>
                     <hr className="my-1 border-gray-100" />
                     <button

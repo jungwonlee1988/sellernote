@@ -38,10 +38,21 @@ export async function GET() {
       },
     })
 
-    // 만료 상태 자동 업데이트
+    // 만료 상태 자동 업데이트 (DB에도 반영)
     const now = new Date()
+    const expiredCouponIds = coupons
+      .filter((coupon) => coupon.status === 'ACTIVE' && coupon.expiresAt < now)
+      .map((coupon) => coupon.id)
+
+    if (expiredCouponIds.length > 0) {
+      await prisma.coupon.updateMany({
+        where: { id: { in: expiredCouponIds } },
+        data: { status: 'EXPIRED' },
+      })
+    }
+
     const updatedCoupons = coupons.map((coupon) => {
-      if (coupon.status === 'ACTIVE' && coupon.expiresAt < now) {
+      if (expiredCouponIds.includes(coupon.id)) {
         return { ...coupon, status: 'EXPIRED' as const }
       }
       return coupon

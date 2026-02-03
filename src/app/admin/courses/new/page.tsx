@@ -21,6 +21,9 @@ import {
   ChevronRight,
   X,
   Tag,
+  MapPin,
+  Video,
+  PlayCircle,
 } from 'lucide-react'
 
 interface Lesson {
@@ -29,6 +32,7 @@ interface Lesson {
   videoUrl: string | null
   duration: number | null
   order: number
+  isPublic: boolean
 }
 
 interface TagItem {
@@ -37,8 +41,19 @@ interface TagItem {
   color: string
 }
 
-const categories = ['무역기초', '통관', '물류', '국가별', 'FTA', '실무']
-const levels = ['입문', '초급', '중급', '고급']
+interface CategoryItem {
+  id: string
+  name: string
+  color: string
+  isActive: boolean
+}
+
+interface LevelItem {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+}
 const weekDays = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function NewCoursePage() {
@@ -58,7 +73,16 @@ export default function NewCoursePage() {
   const [price, setPrice] = useState('')
   const [instructor, setInstructor] = useState('')
   const [thumbnail, setThumbnail] = useState<string | null>(null)
-  const [lessons, setLessons] = useState<Lesson[]>([{ title: '', content: null, videoUrl: null, duration: 30, order: 1 }])
+  const [lessons, setLessons] = useState<Lesson[]>([{ title: '', content: null, videoUrl: null, duration: 30, order: 1, isPublic: false }])
+  const [uploadingLessonIndex, setUploadingLessonIndex] = useState<number | null>(null)
+  const [courseType, setCourseType] = useState<'LIVE_ONLINE' | 'LIVE_OFFLINE' | 'RECORDED'>('LIVE_OFFLINE')
+  const [capacity, setCapacity] = useState('')
+
+  // VOD 관련 state
+  const [vodEnabled, setVodEnabled] = useState(false)
+  const [vodFreeDays, setVodFreeDays] = useState('14')  // 기본 2주
+  const [vodPrice, setVodPrice] = useState('')
+  const [vodExpiryDays, setVodExpiryDays] = useState('90')  // 기본 90일
 
   // 일정 관련 state
   const [startDate, setStartDate] = useState<string>('')
@@ -71,11 +95,76 @@ export default function NewCoursePage() {
   const [availableTags, setAvailableTags] = useState<TagItem[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
-  const [activeTab, setActiveTab] = useState<'info' | 'lessons' | 'description' | 'schedule'>('info')
+  // 카테고리 관련 state
+  const [categories, setCategories] = useState<CategoryItem[]>([])
+
+  // 난이도 관련 state
+  const [levels, setLevels] = useState<LevelItem[]>([])
+
+  const [activeTab, setActiveTab] = useState<'info' | 'lessons' | 'description' | 'schedule' | 'vod'>('info')
 
   useEffect(() => {
     fetchTags()
+    fetchCategories()
+    fetchLevels()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/admin/categories')
+      if (response.ok) {
+        const data = await response.json()
+        setCategories(data.filter((c: CategoryItem) => c.isActive))
+      } else {
+        // API 실패 시 기본 카테고리
+        setCategories([
+          { id: '1', name: '무역기초', color: '#3B82F6', isActive: true },
+          { id: '2', name: '통관', color: '#22C55E', isActive: true },
+          { id: '3', name: '물류', color: '#F59E0B', isActive: true },
+          { id: '4', name: '국가별', color: '#EC4899', isActive: true },
+          { id: '5', name: 'FTA', color: '#8B5CF6', isActive: true },
+          { id: '6', name: '실무', color: '#6B7280', isActive: true },
+        ])
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error)
+      // 기본 카테고리 설정
+      setCategories([
+        { id: '1', name: '무역기초', color: '#3B82F6', isActive: true },
+        { id: '2', name: '통관', color: '#22C55E', isActive: true },
+        { id: '3', name: '물류', color: '#F59E0B', isActive: true },
+        { id: '4', name: '국가별', color: '#EC4899', isActive: true },
+        { id: '5', name: 'FTA', color: '#8B5CF6', isActive: true },
+        { id: '6', name: '실무', color: '#6B7280', isActive: true },
+      ])
+    }
+  }
+
+  const fetchLevels = async () => {
+    try {
+      const response = await fetch('/api/admin/levels')
+      if (response.ok) {
+        const data = await response.json()
+        setLevels(data.filter((l: LevelItem) => l.isActive))
+      } else {
+        // 폴백: 기본 난이도
+        setLevels([
+          { id: '1', name: '입문', description: null, isActive: true },
+          { id: '2', name: '초급', description: null, isActive: true },
+          { id: '3', name: '중급', description: null, isActive: true },
+          { id: '4', name: '고급', description: null, isActive: true },
+        ])
+      }
+    } catch (error) {
+      console.error('Failed to fetch levels:', error)
+      setLevels([
+        { id: '1', name: '입문', description: null, isActive: true },
+        { id: '2', name: '초급', description: null, isActive: true },
+        { id: '3', name: '중급', description: null, isActive: true },
+        { id: '4', name: '고급', description: null, isActive: true },
+      ])
+    }
+  }
 
   const fetchTags = async () => {
     try {
@@ -182,7 +271,36 @@ export default function NewCoursePage() {
   }
 
   const addLesson = () => {
-    setLessons([...lessons, { title: '', content: null, videoUrl: null, duration: 30, order: lessons.length + 1 }])
+    setLessons([...lessons, { title: '', content: null, videoUrl: null, duration: 30, order: lessons.length + 1, isPublic: false }])
+  }
+
+  const handleVideoUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingLessonIndex(index)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/video', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        updateLesson(index, 'videoUrl', data.url)
+      } else {
+        setError(data.error || '비디오 업로드에 실패했습니다.')
+      }
+    } catch {
+      setError('비디오 업로드 중 오류가 발생했습니다.')
+    } finally {
+      setUploadingLessonIndex(null)
+    }
   }
 
   const removeLesson = (index: number) => {
@@ -282,8 +400,21 @@ export default function NewCoursePage() {
     e.preventDefault()
     setError(null)
 
-    if (!title || !description || !category || !level || !price || !instructor) {
-      setError('모든 필수 항목을 입력해주세요.')
+    // 필수값 검증
+    const missingFields: string[] = []
+    if (!title.trim()) missingFields.push('강의 제목')
+    if (!description.trim()) missingFields.push('강의 설명')
+    // 카테고리가 빈 값이거나, 현재 카테고리 목록에 없는 경우
+    const validCategories = categories.map(c => c.name)
+    if (!category || !validCategories.includes(category)) missingFields.push('카테고리')
+    // 난이도가 빈 값이거나, 난이도 목록에 없는 경우
+    const validLevels = levels.map(l => l.name)
+    if (!level || !validLevels.includes(level)) missingFields.push('난이도')
+    if (!price || parseInt(price) < 0) missingFields.push('가격')
+    if (!instructor.trim()) missingFields.push('강사명')
+
+    if (missingFields.length > 0) {
+      setError(`다음 필수 항목을 입력해주세요:\n• ${missingFields.join('\n• ')}`)
       return
     }
 
@@ -301,14 +432,22 @@ export default function NewCoursePage() {
           price: parseInt(price),
           instructor,
           thumbnail,
+          courseType,
+          capacity: capacity ? parseInt(capacity) : null,
           startDate: startDate || null,
           endDate: endDate || null,
+          // VOD 설정
+          vodEnabled,
+          vodFreeDays: vodFreeDays ? parseInt(vodFreeDays) : null,
+          vodPrice: vodPrice ? parseInt(vodPrice) : null,
+          vodExpiryDays: vodExpiryDays ? parseInt(vodExpiryDays) : null,
           lessons: lessons.filter(l => l.title.trim()).map((l, i) => ({
             title: l.title,
             content: l.content,
             videoUrl: l.videoUrl,
             duration: l.duration,
             order: i + 1,
+            isPublic: l.isPublic,
           })),
           schedules: selectedDates.map(date => ({ date })),
           tagIds: selectedTags,
@@ -344,7 +483,7 @@ export default function NewCoursePage() {
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg whitespace-pre-line">
           {error}
         </div>
       )}
@@ -382,6 +521,14 @@ export default function NewCoursePage() {
           }`}
         >
           교육 일정 ({selectedDates.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('vod')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'vod' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          VOD 설정
         </button>
       </div>
 
@@ -451,6 +598,88 @@ export default function NewCoursePage() {
                 />
               </div>
 
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  강의 유형 <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  <label className={`flex flex-col items-center justify-center gap-2 px-4 py-4 border rounded-lg cursor-pointer transition-colors ${
+                    courseType === 'LIVE_OFFLINE'
+                      ? 'border-[#6AAF50] bg-[#F5FAF3] text-[#6AAF50]'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="courseType"
+                      value="LIVE_OFFLINE"
+                      checked={courseType === 'LIVE_OFFLINE'}
+                      onChange={() => setCourseType('LIVE_OFFLINE')}
+                      className="sr-only"
+                    />
+                    <MapPin className="h-6 w-6" />
+                    <span className="font-medium">라이브 오프라인</span>
+                    <span className="text-xs text-gray-500">현장 교육</span>
+                  </label>
+                  <label className={`flex flex-col items-center justify-center gap-2 px-4 py-4 border rounded-lg cursor-pointer transition-colors ${
+                    courseType === 'LIVE_ONLINE'
+                      ? 'border-[#6AAF50] bg-[#F5FAF3] text-[#6AAF50]'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="courseType"
+                      value="LIVE_ONLINE"
+                      checked={courseType === 'LIVE_ONLINE'}
+                      onChange={() => setCourseType('LIVE_ONLINE')}
+                      className="sr-only"
+                    />
+                    <Video className="h-6 w-6" />
+                    <span className="font-medium">라이브 온라인</span>
+                    <span className="text-xs text-gray-500">화상 수업</span>
+                  </label>
+                  <label className={`flex flex-col items-center justify-center gap-2 px-4 py-4 border rounded-lg cursor-pointer transition-colors ${
+                    courseType === 'RECORDED'
+                      ? 'border-[#6AAF50] bg-[#F5FAF3] text-[#6AAF50]'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="courseType"
+                      value="RECORDED"
+                      checked={courseType === 'RECORDED'}
+                      onChange={() => setCourseType('RECORDED')}
+                      className="sr-only"
+                    />
+                    <PlayCircle className="h-6 w-6" />
+                    <span className="font-medium">녹화 강의</span>
+                    <span className="text-xs text-gray-500">VOD</span>
+                  </label>
+                </div>
+                {courseType === 'RECORDED' && (
+                  <p className="mt-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                    녹화 강의는 라이브 온라인 강의 후 녹화본을 연결하여 생성합니다.
+                    먼저 라이브 온라인 강의를 생성하세요.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  정원
+                </label>
+                <input
+                  type="number"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  placeholder="정원 미설정 시 무제한"
+                  min={1}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50]"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  정원 초과 시 예약 대기로 전환됩니다
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   카테고리 <span className="text-red-500">*</span>
@@ -462,7 +691,7 @@ export default function NewCoursePage() {
                 >
                   <option value="">선택하세요</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -478,7 +707,7 @@ export default function NewCoursePage() {
                 >
                   <option value="">선택하세요</option>
                   {levels.map((lv) => (
-                    <option key={lv} value={lv}>{lv}</option>
+                    <option key={lv.id} value={lv.name}>{lv.name}</option>
                   ))}
                 </select>
               </div>
@@ -706,13 +935,65 @@ export default function NewCoursePage() {
                         </div>
                       </div>
 
-                      <input
-                        type="text"
-                        value={lesson.videoUrl || ''}
-                        onChange={(e) => updateLesson(index, 'videoUrl', e.target.value || null)}
-                        placeholder="동영상 URL (YouTube, Vimeo 등)"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50] text-sm"
-                      />
+                      {/* 비디오 입력 영역 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={lesson.videoUrl || ''}
+                            onChange={(e) => updateLesson(index, 'videoUrl', e.target.value || null)}
+                            placeholder="동영상 URL (YouTube, Vimeo 등) 또는 업로드"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50] text-sm"
+                          />
+                          {(courseType === 'LIVE_OFFLINE' || courseType === 'RECORDED') && (
+                            <label className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+                              uploadingLessonIndex === index
+                                ? 'bg-gray-200 cursor-not-allowed'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}>
+                              {uploadingLessonIndex === index ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Upload className="h-4 w-4" />
+                              )}
+                              <span className="text-sm whitespace-nowrap">
+                                {uploadingLessonIndex === index ? '업로드 중...' : '비디오 업로드'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                                onChange={(e) => handleVideoUpload(index, e)}
+                                disabled={uploadingLessonIndex === index}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+                        {lesson.videoUrl && lesson.videoUrl.startsWith('/uploads/') && (
+                          <p className="text-xs text-green-600 flex items-center gap-1">
+                            <Video className="h-3 w-3" />
+                            업로드된 비디오: {lesson.videoUrl.split('/').pop()}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* VOD 공개 여부 토글 */}
+                      {(vodEnabled || courseType === 'RECORDED') && (
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={lesson.isPublic}
+                              onChange={(e) => updateLesson(index, 'isPublic', e.target.checked)}
+                              className="w-4 h-4 text-[#6AAF50] border-gray-300 rounded focus:ring-[#6AAF50]"
+                            />
+                            <span className="text-sm text-gray-700">VOD 공개</span>
+                          </label>
+                          <span className="text-xs text-gray-500">
+                            {lesson.isPublic ? '수강생에게 공개됨' : '수강생에게 비공개'}
+                          </span>
+                        </div>
+                      )}
 
                       <textarea
                         value={lesson.content || ''}
@@ -933,6 +1214,137 @@ export default function NewCoursePage() {
                   전체 삭제
                 </button>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* VOD 설정 탭 */}
+        {activeTab === 'vod' && (
+          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <PlayCircle className="h-5 w-5 text-[#6AAF50]" />
+              <h2 className="text-lg font-semibold text-gray-900">VOD 설정</h2>
+            </div>
+
+            {/* VOD 제공 여부 */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <p className="font-medium text-gray-900">VOD(다시보기) 제공</p>
+                  <p className="text-sm text-gray-500">
+                    {courseType === 'RECORDED'
+                      ? '녹화 강의는 VOD로 제공됩니다'
+                      : '라이브 강의 종료 후 녹화본을 제공합니다'}
+                  </p>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={vodEnabled || courseType === 'RECORDED'}
+                    onChange={(e) => setVodEnabled(e.target.checked)}
+                    disabled={courseType === 'RECORDED'}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#6AAF50]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6AAF50]"></div>
+                </div>
+              </label>
+            </div>
+
+            {(vodEnabled || courseType === 'RECORDED') && (
+              <>
+                {/* 라이브 강의: 무료 제공 기간 */}
+                {courseType !== 'RECORDED' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      무료 제공 기간 (종료일 기준)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">종료일 +</span>
+                      <input
+                        type="number"
+                        value={vodFreeDays}
+                        onChange={(e) => setVodFreeDays(e.target.value)}
+                        min={0}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50]"
+                      />
+                      <span className="text-gray-500">일</span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      0으로 설정하면 무료 제공 없이 바로 추가 결제가 필요합니다
+                    </p>
+                  </div>
+                )}
+
+                {/* 녹화 강의: 시청 기간 */}
+                {courseType === 'RECORDED' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      시청 가능 기간 (결제일 기준)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={vodExpiryDays}
+                        onChange={(e) => setVodExpiryDays(e.target.value)}
+                        min={1}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50]"
+                      />
+                      <span className="text-gray-500">일</span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      결제일로부터 설정한 기간 동안 시청 가능합니다
+                    </p>
+                  </div>
+                )}
+
+                {/* 추가 결제 금액 (라이브 강의) */}
+                {courseType !== 'RECORDED' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      추가 결제 금액 (무료 기간 종료 후)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={vodPrice}
+                        onChange={(e) => setVodPrice(e.target.value)}
+                        min={0}
+                        placeholder="0"
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6AAF50]"
+                      />
+                      <span className="text-gray-500">원</span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      0으로 설정하면 무료 기간 종료 후 VOD를 제공하지 않습니다
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* 안내 */}
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-medium text-blue-900 mb-2">VOD 안내</h3>
+              <ul className="text-sm text-blue-800 space-y-1">
+                {courseType === 'RECORDED' ? (
+                  <>
+                    <li>• 녹화 강의는 커리큘럼에 영상을 직접 업로드합니다</li>
+                    <li>• 결제일로부터 설정한 기간 동안 시청 가능합니다</li>
+                  </>
+                ) : courseType === 'LIVE_ONLINE' ? (
+                  <>
+                    <li>• 화상 수업 진행 시 자동으로 녹화됩니다</li>
+                    <li>• 녹화본은 관리자가 공개 여부를 선택할 수 있습니다</li>
+                    <li>• 무료 기간 종료 후 추가 결제로 연장 가능합니다</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• 오프라인 강의는 자동 녹화가 되지 않습니다</li>
+                    <li>• 커리큘럼에서 영상을 직접 업로드하여 VOD를 제공할 수 있습니다</li>
+                    <li>• 무료 기간 종료 후 추가 결제로 연장 가능합니다</li>
+                  </>
+                )}
+              </ul>
             </div>
           </div>
         )}
