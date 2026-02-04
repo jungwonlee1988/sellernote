@@ -4,12 +4,12 @@ const livekitHost = process.env.LIVEKIT_URL || ''
 const apiKey = process.env.LIVEKIT_API_KEY || ''
 const apiSecret = process.env.LIVEKIT_API_SECRET || ''
 
-export function createToken(
+export async function createToken(
   roomName: string,
   participantName: string,
   participantId: string,
   isHost: boolean = false
-): string {
+): Promise<string> {
   const at = new AccessToken(apiKey, apiSecret, {
     identity: participantId,
     name: participantName,
@@ -26,7 +26,7 @@ export function createToken(
     roomRecord: isHost,
   })
 
-  return at.toJwt()
+  return await at.toJwt()
 }
 
 export function getRoomServiceClient(): RoomServiceClient {
@@ -75,7 +75,7 @@ export async function listParticipants(roomName: string) {
 
 export async function startRecording(
   roomName: string,
-  egressId: string,
+  _egressId: string,
   storagePath: string
 ) {
   const egressClient = getEgressClient()
@@ -83,7 +83,8 @@ export async function startRecording(
   try {
     // Supabase Storage에 직접 업로드하는 경우
     // 실제 구현에서는 S3 호환 스토리지 설정 필요
-    const egress = await egressClient.startRoomCompositeEgress(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const egress = await (egressClient as any).startRoomCompositeEgress(
       roomName,
       {
         file: {

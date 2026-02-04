@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-// GET: 강의의 모든 녹화본 조회 (원본 라이브 강의의 녹화 포함)
+// GET: 강의의 모든 녹화본 조회
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,11 +20,7 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        sourceCourse: true,
         lessons: {
-          include: {
-            recording: true,
-          },
           orderBy: { order: 'asc' },
         },
       },
@@ -34,14 +30,11 @@ export async function GET(
       return NextResponse.json({ error: '강의를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    // 녹화본을 가져올 원본 강의 ID (녹화 강의면 sourceCourse, 아니면 자신)
-    const sourceCourseId = course.sourceCourseId || courseId
-
-    // 원본 라이브 강의의 모든 녹화본 조회
+    // 강의의 모든 녹화본 조회
     const recordings = await prisma.sessionRecording.findMany({
       where: {
         session: {
-          courseId: sourceCourseId,
+          courseId: courseId,
         },
         status: 'READY',
       },

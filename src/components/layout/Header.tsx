@@ -11,7 +11,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
-  const navigation = [
+  const navigation: { name: string; href: string; external?: boolean }[] = [
     { name: '회사소개', href: '/about' },
     { name: '강의', href: '/courses' },
     { name: '화상수업', href: '/live' },

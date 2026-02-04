@@ -308,7 +308,7 @@ export default function NewCoursePage() {
     setLessons(lessons.filter((_, i) => i !== index).map((l, i) => ({ ...l, order: i + 1 })))
   }
 
-  const updateLesson = (index: number, field: keyof Lesson, value: string | number | null) => {
+  const updateLesson = (index: number, field: keyof Lesson, value: string | number | boolean | null) => {
     setLessons(lessons.map((lesson, i) =>
       i === index ? { ...lesson, [field]: value } : lesson
     ))

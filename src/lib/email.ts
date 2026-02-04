@@ -81,6 +81,68 @@ export function generateVerificationToken(): string {
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+export function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export async function sendVerificationCodeEmail(email: string, code: string) {
+  try {
+    const { data, error } = await getResendClient().emails.send({
+      from: '셀러노트 <noreply@seller-note.com>',
+      to: email,
+      subject: '[셀러노트] 이메일 인증 코드',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: 'Noto Sans KR', sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="background-color: #6AAF50; padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">셀러노트</h1>
+              <p style="color: #E8F5E3; margin: 10px 0 0; font-size: 14px;">수입무역 전문 교육 플랫폼</p>
+            </div>
+            <div style="padding: 40px 30px;">
+              <h2 style="color: #1f2937; margin: 0 0 20px; font-size: 20px;">이메일 인증 코드</h2>
+              <p style="color: #4b5563; line-height: 1.6; margin: 0 0 30px;">
+                안녕하세요!<br><br>
+                셀러노트 회원가입을 위한 인증 코드입니다.<br>
+                아래 코드를 입력해주세요.
+              </p>
+              <div style="background-color: #F5FAF3; border: 2px solid #6AAF50; border-radius: 12px; padding: 24px; text-align: center; margin: 30px 0;">
+                <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px;">인증 코드</p>
+                <p style="color: #1f2937; font-size: 36px; font-weight: bold; letter-spacing: 8px; margin: 0;">${code}</p>
+              </div>
+              <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
+                이 코드는 10분 동안 유효합니다.
+              </p>
+            </div>
+            <div style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                본 메일은 셀러노트 회원가입 시 발송되는 자동 메일입니다.<br>
+                회원가입을 요청하지 않으셨다면 이 메일을 무시해주세요.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send verification code email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Email sending error:', error);
+    return { success: false, error: 'Failed to send email' };
+  }
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 

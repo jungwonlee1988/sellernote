@@ -56,10 +56,9 @@ export async function POST(
         isPublished: false,
         targetAudience: sourceCourse.targetAudience,
         benefits: sourceCourse.benefits,
-        sourceCourseId: sourceCourseId,
         // 원본 강의의 레슨 구조 복사 (녹화본 연결 없이)
         lessons: {
-          create: sourceCourse.lessons.map((lesson) => ({
+          create: sourceCourse.lessons.map((lesson: { title: string; content: string | null; duration: number | null; order: number }) => ({
             title: lesson.title,
             content: lesson.content,
             duration: lesson.duration,
@@ -68,7 +67,7 @@ export async function POST(
         },
         // 태그 복사
         tags: {
-          create: sourceCourse.tags.map((tag) => ({
+          create: sourceCourse.tags.map((tag: { tagId: string }) => ({
             tagId: tag.tagId,
           })),
         },
@@ -76,12 +75,6 @@ export async function POST(
       include: {
         lessons: {
           orderBy: { order: 'asc' },
-        },
-        sourceCourse: {
-          select: {
-            id: true,
-            title: true,
-          },
         },
       },
     })

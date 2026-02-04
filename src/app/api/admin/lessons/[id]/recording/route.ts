@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-// PATCH: 레슨에 녹화본 연결/변경
+// PATCH: 레슨에 녹화본 연결/변경 (TODO: 스키마 업데이트 필요)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -39,14 +39,15 @@ export async function PATCH(
       }
     }
 
-    // 레슨에 녹화본 연결 (null이면 연결 해제)
+    // 레슨의 videoUrl 필드를 활용하여 녹화본 URL 저장
+    const recording = recordingId ? await prisma.sessionRecording.findUnique({
+      where: { id: recordingId },
+    }) : null
+
     const updatedLesson = await prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        recordingId: recordingId || null,
-      },
-      include: {
-        recording: true,
+        videoUrl: recording?.fileUrl || null,
       },
     })
 
@@ -76,7 +77,7 @@ export async function DELETE(
     const updatedLesson = await prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        recordingId: null,
+        videoUrl: null,
       },
     })
 

@@ -3,10 +3,13 @@
 import { useEffect, useState, useRef, use } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import ReactPlayer from 'react-player'
+import dynamic from 'next/dynamic'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ArrowLeft, Clock, User } from 'lucide-react'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any
 
 interface RecordingDetail {
   id: string
@@ -41,7 +44,8 @@ export default function RecordingPlayerPage({
   const { id } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
-  const playerRef = useRef<ReactPlayer>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null)
   const [recording, setRecording] = useState<RecordingDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [playing, setPlaying] = useState(false)
@@ -95,7 +99,8 @@ export default function RecordingPlayerPage({
     }
   }
 
-  const handleProgress = (state: { playedSeconds: number }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleProgress = (state: any) => {
     setProgress(state.playedSeconds)
     saveProgress(state.playedSeconds, 10)
   }
@@ -151,13 +156,6 @@ export default function RecordingPlayerPage({
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
             onEnded={() => saveProgress(recording.duration || progress, 0)}
-            config={{
-              file: {
-                attributes: {
-                  controlsList: 'nodownload',
-                },
-              },
-            }}
           />
         </div>
 
