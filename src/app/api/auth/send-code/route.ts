@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!emailResult.success) {
       console.error('Failed to send verification code:', emailResult.error)
       return NextResponse.json(
-        { error: '이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.' },
+        { error: `이메일 발송 실패: ${emailResult.error}` },
         { status: 500 }
       )
     }
