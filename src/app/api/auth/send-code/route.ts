@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Send code error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: '인증 코드 발송 중 오류가 발생했습니다.' },
+      { error: `인증 코드 발송 중 오류가 발생했습니다: ${errorMessage}` },
       { status: 500 }
     )
   }
