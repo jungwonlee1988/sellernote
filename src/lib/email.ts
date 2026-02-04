@@ -15,7 +15,7 @@ export async function sendVerificationEmail(email: string, token: string) {
 
   try {
     const { data, error } = await getResendClient().emails.send({
-      from: '셀러노트 <noreply@seller-note.com>',
+      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
       to: email,
       subject: '[셀러노트] 이메일 인증을 완료해주세요',
       html: `
@@ -88,7 +88,7 @@ export function generateVerificationCode(): string {
 export async function sendVerificationCodeEmail(email: string, code: string) {
   try {
     const { data, error } = await getResendClient().emails.send({
-      from: '셀러노트 <noreply@seller-note.com>',
+      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
       to: email,
       subject: '[셀러노트] 이메일 인증 코드',
       html: `
@@ -148,7 +148,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 
   try {
     const { data, error } = await getResendClient().emails.send({
-      from: '셀러노트 <noreply@seller-note.com>',
+      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
       to: email,
       subject: '[셀러노트] 비밀번호 재설정',
       html: `
@@ -226,7 +226,7 @@ export async function sendCouponIssuedEmail(
 
   try {
     const { data, error } = await getResendClient().emails.send({
-      from: '셀러노트 <noreply@seller-note.com>',
+      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
       to: email,
       subject: `[셀러노트] 수강 완료 기념 ${formattedAmount}원 할인 쿠폰이 발급되었습니다!`,
       html: `
