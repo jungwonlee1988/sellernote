@@ -133,13 +133,14 @@ export async function sendVerificationCodeEmail(email: string, code: string) {
 
     if (error) {
       console.error('Failed to send verification code email:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || JSON.stringify(error) };
     }
 
     return { success: true, data };
   } catch (error) {
     console.error('Email sending error:', error);
-    return { success: false, error: 'Failed to send email' };
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    return { success: false, error: errorMsg };
   }
 }
 
