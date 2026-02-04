@@ -1,24 +1,26 @@
-import { Resend } from 'resend';
+import * as postmark from 'postmark';
 
 // Lazy initialization to avoid build-time errors
-let resend: Resend | null = null;
+let client: postmark.ServerClient | null = null;
 
-function getResendClient() {
-  if (!resend) {
-    resend = new Resend(process.env.RESEND_API_KEY);
+function getPostmarkClient() {
+  if (!client) {
+    client = new postmark.ServerClient(process.env.POSTMARK_API_KEY || '');
   }
-  return resend;
+  return client;
 }
+
+const fromEmail = process.env.POSTMARK_FROM_EMAIL || 'noreply@seller-note.com';
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
 
   try {
-    const { data, error } = await getResendClient().emails.send({
-      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
-      to: email,
-      subject: '[셀러노트] 이메일 인증을 완료해주세요',
-      html: `
+    const response = await getPostmarkClient().sendEmail({
+      From: fromEmail,
+      To: email,
+      Subject: '[셀러노트] 이메일 인증을 완료해주세요',
+      HtmlBody: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -63,15 +65,11 @@ export async function sendVerificationEmail(email: string, token: string) {
       `,
     });
 
-    if (error) {
-      console.error('Failed to send verification email:', error);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data };
+    return { success: true, data: response };
   } catch (error) {
     console.error('Email sending error:', error);
-    return { success: false, error: 'Failed to send email' };
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -87,11 +85,11 @@ export function generateVerificationCode(): string {
 
 export async function sendVerificationCodeEmail(email: string, code: string) {
   try {
-    const { data, error } = await getResendClient().emails.send({
-      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
-      to: email,
-      subject: '[셀러노트] 이메일 인증 코드',
-      html: `
+    const response = await getPostmarkClient().sendEmail({
+      From: fromEmail,
+      To: email,
+      Subject: '[셀러노트] 이메일 인증 코드',
+      HtmlBody: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -131,12 +129,7 @@ export async function sendVerificationCodeEmail(email: string, code: string) {
       `,
     });
 
-    if (error) {
-      console.error('Failed to send verification code email:', error);
-      return { success: false, error: error.message || JSON.stringify(error) };
-    }
-
-    return { success: true, data };
+    return { success: true, data: response };
   } catch (error) {
     console.error('Email sending error:', error);
     const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
@@ -148,11 +141,11 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
   try {
-    const { data, error } = await getResendClient().emails.send({
-      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
-      to: email,
-      subject: '[셀러노트] 비밀번호 재설정',
-      html: `
+    const response = await getPostmarkClient().sendEmail({
+      From: fromEmail,
+      To: email,
+      Subject: '[셀러노트] 비밀번호 재설정',
+      HtmlBody: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -197,15 +190,11 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       `,
     });
 
-    if (error) {
-      console.error('Failed to send password reset email:', error);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data };
+    return { success: true, data: response };
   } catch (error) {
     console.error('Email sending error:', error);
-    return { success: false, error: 'Failed to send email' };
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -226,11 +215,11 @@ export async function sendCouponIssuedEmail(
   });
 
   try {
-    const { data, error } = await getResendClient().emails.send({
-      from: process.env.RESEND_FROM_EMAIL || '셀러노트 <onboarding@resend.dev>',
-      to: email,
-      subject: `[셀러노트] 수강 완료 기념 ${formattedAmount}원 할인 쿠폰이 발급되었습니다!`,
-      html: `
+    const response = await getPostmarkClient().sendEmail({
+      From: fromEmail,
+      To: email,
+      Subject: `[셀러노트] 수강 완료 기념 ${formattedAmount}원 할인 쿠폰이 발급되었습니다!`,
+      HtmlBody: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -245,7 +234,7 @@ export async function sendCouponIssuedEmail(
             </div>
             <div style="padding: 40px 30px;">
               <h2 style="color: #1f2937; margin: 0 0 20px; font-size: 20px;">
-                ${userName}님, 축하드립니다! 🎉
+                ${userName}님, 축하드립니다!
               </h2>
               <p style="color: #4b5563; line-height: 1.6; margin: 0 0 20px;">
                 <strong style="color: #6AAF50;">${courseName}</strong> 과정을 성공적으로 완료하셨습니다!<br><br>
@@ -262,9 +251,9 @@ export async function sendCouponIssuedEmail(
               <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px; margin: 20px 0;">
                 <p style="color: #4b5563; font-size: 14px; margin: 0; line-height: 1.8;">
                   <strong>쿠폰 안내</strong><br>
-                  • 유효기간: <strong>${formattedExpiry}</strong>까지<br>
-                  • 본인 또는 지인에게 선물 가능<br>
-                  • 모든 강의에 사용 가능
+                  - 유효기간: <strong>${formattedExpiry}</strong>까지<br>
+                  - 본인 또는 지인에게 선물 가능<br>
+                  - 모든 강의에 사용 가능
                 </p>
               </div>
 
@@ -290,14 +279,10 @@ export async function sendCouponIssuedEmail(
       `,
     });
 
-    if (error) {
-      console.error('Failed to send coupon email:', error);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data };
+    return { success: true, data: response };
   } catch (error) {
     console.error('Email sending error:', error);
-    return { success: false, error: 'Failed to send email' };
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    return { success: false, error: errorMsg };
   }
 }
