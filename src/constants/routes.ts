@@ -1,0 +1,75 @@
+export const routes = {
+  home: '/',
+  about: '/about',
+  courses: '/courses',
+  course: (id: string) => `/courses/${id}`,
+  community: '/community',
+  post: (id: string) => `/community/${id}`,
+  writePost: '/community/write',
+  live: '/live',
+  liveSession: (id: string) => `/live/${id}`,
+  recordings: '/recordings',
+  assignments: '/assignments',
+  assignment: (id: string) => `/assignments/${id}`,
+  checkout: '/checkout',
+  checkoutComplete: '/checkout/complete',
+
+  auth: {
+    login: '/login',
+    register: '/register',
+    forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
+    verifyEmail: '/verify-email',
+  },
+
+  mypage: {
+    index: '/mypage',
+    courses: '/mypage/courses',
+    coupons: '/mypage/coupons',
+    edit: '/mypage/edit',
+    referral: '/mypage/referral',
+  },
+
+  admin: {
+    index: '/admin',
+    courses: '/admin/courses',
+    newCourse: '/admin/courses/new',
+    editCourse: (id: string) => `/admin/courses/${id}/edit`,
+    courseSessions: (id: string) => `/admin/courses/${id}/sessions`,
+    courseRecordings: (id: string) => `/admin/courses/${id}/recordings`,
+    users: '/admin/users',
+    payments: '/admin/payments',
+    posts: '/admin/posts',
+    categories: '/admin/categories',
+    levels: '/admin/levels',
+    tags: '/admin/tags',
+    assignments: '/admin/assignments',
+    liveSessions: '/admin/live-sessions',
+    newLiveSession: '/admin/live-sessions/new',
+  },
+
+  api: {
+    auth: {
+      register: '/api/auth/register',
+      forgotPassword: '/api/auth/forgot-password',
+      resetPassword: '/api/auth/reset-password',
+      verifyEmail: '/api/auth/verify-email',
+      verifyCode: '/api/auth/verify-code',
+    },
+    courses: '/api/courses',
+    course: (id: string) => `/api/courses/${id}`,
+    reservations: (courseId: string) => `/api/courses/${courseId}/reservations`,
+    reviews: (courseId: string) => `/api/courses/${courseId}/reviews`,
+    admin: {
+      courses: '/api/admin/courses',
+      course: (id: string) => `/api/admin/courses/${id}`,
+      users: '/api/admin/users',
+      categories: '/api/admin/categories',
+      levels: '/api/admin/levels',
+      tags: '/api/admin/tags',
+      stats: '/api/admin/stats',
+    },
+  },
+} as const
+
+export type Routes = typeof routes

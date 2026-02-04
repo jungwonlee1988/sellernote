@@ -1,0 +1,6 @@
+export * from './types'
+export { BasicInfoTab } from './BasicInfoTab'
+export { DescriptionTab } from './DescriptionTab'
+export { LessonsTab } from './LessonsTab'
+export { ScheduleTab } from './ScheduleTab'
+export { VodSettingsTab } from './VodSettingsTab'
